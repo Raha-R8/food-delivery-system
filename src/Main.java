@@ -4,7 +4,7 @@ import java.util.Scanner;
 public class Main {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/mash_mammad";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "password";
+    private static final String DB_PASSWORD = "1234567890qwertyuiop";
 
     private static Scanner scanner = new Scanner(System.in);
 
@@ -70,6 +70,12 @@ public class Main {
         String lastName = scanner.nextLine();
         System.out.print("Enter phone number: ");
         String phoneNum = scanner.nextLine();
+        System.out.print("Enter city: ");
+        String city = scanner.nextLine();
+        System.out.print("Enter address: ");
+        String address = scanner.nextLine();
+        System.out.print("Enter map location: ");
+        String mapLoc = scanner.nextLine();
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             CallableStatement stmt = conn.prepareCall("{CALL RegisterUser(?, ?, ?, ?, ?, ?)}");
@@ -83,7 +89,23 @@ public class Main {
 
             boolean isRegistered = stmt.getBoolean(6);
             if (isRegistered) {
-                System.out.println("Registration successful! You can now log in.");
+                System.out.println("Registration successful! Adding default address...");
+
+                // Ensure city exists in city table
+                CallableStatement cityStmt = conn.prepareCall("{CALL AddCity(?)}");
+                cityStmt.setString(1, city);
+                cityStmt.execute();
+
+                // Add default address
+                CallableStatement addressStmt = conn.prepareCall("{CALL AddAddress(?, ?, ?, ?, ?)}");
+                addressStmt.setString(1, username);
+                addressStmt.setString(2, city);
+                addressStmt.setString(3, address);
+                addressStmt.setString(4, mapLoc);
+                addressStmt.setBoolean(5, true);
+                addressStmt.execute();
+
+                System.out.println("Default address added successfully.");
             } else {
                 System.out.println("Username already exists!");
             }
