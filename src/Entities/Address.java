@@ -1,3 +1,4 @@
+package Entities;
 
 public class Address {
     private int id;
