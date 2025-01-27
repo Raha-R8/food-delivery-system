@@ -1,3 +1,6 @@
+import Entities.Item;
+import Entities.Restaurant;
+
 import java.sql.*;
 import java.util.*;
 
@@ -24,8 +27,9 @@ public class UserMenu {
             System.out.println("3. Select Restaurant");
             System.out.println("4. View Paid Orders");
             System.out.println("5. View Shopping Cart");
-            System.out.println("6. Settings");
-            System.out.println("7. Logout");
+            System.out.println("6. View Owned Restaurants");
+            System.out.println("7. Settings");
+            System.out.println("8. Logout");
             System.out.print("Select an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
@@ -60,13 +64,17 @@ public class UserMenu {
                     displayOrders(username, false);
                     break;
                 case 6:
+                    RestaurantManager restaurantManager = new RestaurantManager();
+                    restaurantManager.manageRestaurants(username, scanner);
+                    break;
+                case 7:
                     if (authenticateUser(username)) {
                         handleSettings(username);
                     } else {
                         System.out.println("Incorrect password. Returning to menu.");
                     }
                     break;
-                case 7:
+                case 8:
                     System.out.println("Logging out...");
                     return;
                 default:
@@ -74,7 +82,6 @@ public class UserMenu {
             }
         }
     }
-
 
     private static boolean authenticateUser(String username) {
         System.out.print("Enter your password: ");
@@ -460,6 +467,7 @@ public class UserMenu {
             }
         }
     }
+
     private static void editUserProfile(String username) {
         System.out.println("\n--- Edit Profile ---");
         System.out.println("Leave fields blank to keep current values.");
@@ -600,116 +608,4 @@ public class UserMenu {
     }
 }
 
-class Restaurant {
-    private int id;
-    private String name;
-    private String city;
-    private String address;
-    private float minPurchase;
-
-    public Restaurant(int id, String name, String city, String address, float minPurchase) {
-        this.id = id;
-        this.name = name;
-        this.city = city;
-        this.address = address;
-        this.minPurchase = minPurchase;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public float getMinPurchase() {
-        return minPurchase;
-    }
-}
-
-class Item {
-    private int id;
-    private String name;
-    private float price;
-    private String ingredients;
-    private String category;
-
-    public Item(int id, String name, float price, String ingredients, String category) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.ingredients = ingredients;
-        this.category = category;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public float getPrice() {
-        return price;
-    }
-
-    public String getIngredients() {
-        return ingredients;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-}
-
-class Address {
-    private int id;
-    private String city;
-    private String address;
-    private String mapLocation;
-    private boolean isDefault;
-
-    public Address(int id, String city, String address, String mapLocation, boolean isDefault) {
-        this.id = id;
-        this.city = city;
-        this.address = address;
-        this.mapLocation = mapLocation;
-        this.isDefault = isDefault;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getMapLocation() {
-        return mapLocation;
-    }
-
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    @Override
-    public String toString() {
-        return city + ", " + address + " (Default: " + isDefault + ")";
-    }
-}
 
