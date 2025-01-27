@@ -50,7 +50,8 @@ public class Main {
             boolean isAuthenticated = stmt.getBoolean(3);
             if (isAuthenticated) {
                 System.out.println("Login successful!");
-                // Redirect based on user type (Admin, Manager, Customer)
+                UserMenu userMenu = new UserMenu();
+                userMenu.displayUserMenu(username);
             } else {
                 System.out.println("Invalid credentials!");
             }
