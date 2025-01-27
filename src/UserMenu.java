@@ -318,12 +318,17 @@ public class UserMenu {
 
             while (rs.next()) {
                 long orderId = rs.getLong("id");
+                float totalPrice = rs.getFloat("totalPrice");
+                float deliveryFee = totalPrice * 0.05f; // 5% of total price
+
                 String orderInfo = "\nOrder Time: " + rs.getTimestamp("orderTime") +
-                        "\nTotal Price: " + rs.getFloat("totalPrice") +
+                        "\nTotal Price: " + totalPrice +
+                        "\nDelivery Fee: " + deliveryFee +  // Add this line
                         "\nItems: ";
                 orderMap.put(orderId, orderInfo);
                 orderItemsMap.put(orderId, new ArrayList<>());
             }
+
 
             for (Long orderId : orderMap.keySet()) {
                 PreparedStatement itemStmt = conn.prepareStatement("SELECT i.title FROM orderItem oi JOIN item i ON oi.itemId = i.id WHERE oi.orderId = ?");
@@ -366,6 +371,8 @@ public class UserMenu {
             }
             if (isPaid) {
                 System.out.println("3. Reorder an order");
+            } else {
+                System.out.println("3. Pay an order");
             }
             System.out.println("4. Back to User Menu");
 
@@ -389,11 +396,39 @@ public class UserMenu {
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid input. Please enter a number.");
                 }
+
+            } else if (!isPaid && choice.equals("3")) {
+                System.out.print("Enter the number of the order to pay: ");
+                try {
+                    int orderIndex = Integer.parseInt(scanner.nextLine()) - 1;
+                    if (orderIndex >= 0 && orderIndex < (end - start)) {
+                        long orderId = orderIdsOnPage.get(orderIndex);
+                        payOrder(orderId);
+                        orderMap.remove(orderId);
+                        orders.remove(orderIndex);
+                        orderIdsOnPage.remove(orderIndex);
+                    } else {
+                        System.out.println("Invalid order selection.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a number.");
+                }
             } else if (choice.equals("4")) {
                 break;
             } else {
                 System.out.println("Invalid choice. Please try again.");
             }
+        }
+    }
+
+    private static void payOrder(long orderId) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            CallableStatement stmt = conn.prepareCall("{CALL PayForOrder(?)}");
+            stmt.setLong(1, orderId);
+            stmt.execute();
+            System.out.println("Order paid successfully.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
