@@ -1,8 +1,16 @@
 import Entities.Restaurant;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.*;
 import java.util.Scanner;
 
 public class RestaurantManager {
@@ -97,35 +105,20 @@ public class RestaurantManager {
         }
     }
 
+
     public static void manageRestaurantOptions(Connection conn, Restaurant restaurant) {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
             System.out.println("\n--- Manage Your Restaurant: " + restaurant.getName() + " ---");
-            System.out.println("1. Change Name");
+            System.out.println("1. Settings");
             System.out.println("2. Exit");
             System.out.print("Choose an option: ");
             int option = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
             if (option == 1) {
-                System.out.print("Enter the new restaurant name: ");
-                String newName = scanner.nextLine();
-
-                try (CallableStatement stmt = conn.prepareCall("{CALL UpdateRestaurantName(?, ?)}")) {
-                    stmt.setInt(1, restaurant.getId());
-                    stmt.setString(2, newName);
-                    int rowsUpdated = stmt.executeUpdate();
-
-                    if (rowsUpdated > 0) {
-                        restaurant.setName(newName);
-                        System.out.println("Restaurant name updated successfully.");
-                    } else {
-                        System.out.println("Failed to update restaurant name.");
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                manageRestaurantSettings(conn, restaurant);
             } else if (option == 2) {
                 System.out.println("Exiting management menu.");
                 break;
@@ -134,4 +127,71 @@ public class RestaurantManager {
             }
         }
     }
+
+    public static void manageRestaurantSettings(Connection conn, Restaurant restaurant) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\n--- Restaurant Settings: " + restaurant.getName() + " ---");
+        System.out.print("Enter new name (or press Enter to keep current: " + restaurant.getName() + "): ");
+        String newName = scanner.nextLine().trim();
+        if (newName.isEmpty()) newName = restaurant.getName();
+
+        System.out.print("Enter image profile path (or press Enter to keep current): ");
+        String imagePath = scanner.nextLine().trim();
+        byte[] newImage = null;
+        if (!imagePath.isEmpty()) {
+            try {
+                File imageFile = new File(imagePath);
+                FileInputStream fis = new FileInputStream(imageFile);
+                newImage = new byte[(int) imageFile.length()];
+                fis.read(newImage);
+                fis.close();
+            } catch (IOException e) {
+                System.out.println("Error reading image file: " + e.getMessage());
+                return;
+            }
+        }
+
+        System.out.print("Enter city (or press Enter to keep current: " + restaurant.getCity() + "): ");
+        String newCity = scanner.nextLine().trim();
+        if (newCity.isEmpty()) newCity = restaurant.getCity();
+
+        System.out.print("Enter address detail (or press Enter to keep current: " + restaurant.getAddress() + "): ");
+        String newAddress = scanner.nextLine().trim();
+        if (newAddress.isEmpty()) newAddress = restaurant.getAddress();
+
+        System.out.print("Enter map location (or press Enter to keep current: " + restaurant.getMapLocation() + "): ");
+        String newMapLocation = scanner.nextLine().trim();
+        if (newMapLocation.isEmpty()) newMapLocation = restaurant.getMapLocation();
+
+        try (CallableStatement stmt = conn.prepareCall("{CALL UpdateRestaurantSettings(?, ?, ?, ?, ?, ?)}")) {
+            stmt.setInt(1, restaurant.getId());
+            stmt.setString(2, newName);
+            if (newImage != null) {
+                stmt.setBytes(3, newImage);
+            } else {
+                stmt.setBytes(3, restaurant.getImage());
+            }
+            stmt.setString(4, newCity);
+            stmt.setString(5, newAddress);
+            stmt.setString(6, newMapLocation);
+
+            int rowsUpdated = stmt.executeUpdate();
+            if (rowsUpdated > 0) {
+                restaurant.setName(newName);
+                if (newImage != null) {
+                    restaurant.setImage(newImage);
+                }
+                restaurant.setCity(newCity);
+                restaurant.setAddress(newAddress);
+                restaurant.setMapLocation(newMapLocation);
+                System.out.println("Restaurant settings updated successfully.");
+            } else {
+                System.out.println("Failed to update restaurant settings.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
