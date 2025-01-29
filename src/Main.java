@@ -8,6 +8,7 @@ public class Main {
 
     private static Scanner scanner = new Scanner(System.in);
 
+
     public static void main(String[] args) {
         while (true) {
             System.out.println("Welcome to Mash Mammad Food Delivery System");
@@ -33,7 +34,6 @@ public class Main {
             }
         }
     }
-
     private static void login() {
         System.out.print("Enter username: ");
         String username = scanner.nextLine();
@@ -48,11 +48,25 @@ public class Main {
             stmt.execute();
 
             boolean isAuthenticated = stmt.getBoolean(3);
+
             if (isAuthenticated) {
-                System.out.println("Login successful!");
-                UserMenu userMenu = new UserMenu();
-                userMenu.displayUserMenu(username);
-            } else {
+                boolean isAdmin = Admin.adminLogin(username, password);
+                if (isAdmin) {
+                    // Admin actions
+                    Admin admin = new Admin(username);
+                    if (admin.isAdmin()) {
+                        System.out.println("Hello Admin!");
+                        admin.adminMenu(); // Handle admin menu
+                    }
+
+                }
+                else{
+                    System.out.println("Login successful!");
+                    System.out.println("Welcome, " + username + "!");
+                    UserMenu userMenu = new UserMenu();
+                    userMenu.displayUserMenu(username);}
+            }
+            else {
                 System.out.println("Invalid credentials!");
             }
         } catch (SQLException e) {
@@ -60,7 +74,8 @@ public class Main {
         }
     }
 
-    private static void register() {
+
+    public static void register() {
         System.out.print("Enter username: ");
         String username = scanner.nextLine();
         System.out.print("Enter password: ");
