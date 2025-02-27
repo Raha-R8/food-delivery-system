@@ -10,7 +10,7 @@ public class Admin {
 
 
     private String username;
-    private Scanner scanner = new Scanner(System.in);
+    private static Scanner scanner = new Scanner(System.in);
     public static ArrayList<Long> restaurantIds = new ArrayList<>(); // Static global array
     private static long editingRestaurantId;
     // Constructor
@@ -460,7 +460,7 @@ public class Admin {
             boolean isSuccess = stmt.getBoolean(7);
             if (isSuccess) {
                 editingRestaurantId = stmt.getLong(8); // Store the generated restaurant ID
-                System.out.println("Restaurant added successfully! ID: " + editingRestaurantId);
+                System.out.println("Restaurant added successfully!");
                 return true;
             } else {
                 System.out.println("Failed to add restaurant.");
@@ -471,8 +471,10 @@ public class Admin {
             return false;
         }
     }
-    public void addOpenDayAndHours() {
-        if (editingRestaurantId <= 0) {
+    public static void addOpenDayAndHours(long restaurantId) {
+
+
+        if (restaurantId <= 0) {
             System.out.println("No restaurant is currently being edited. Please add a restaurant first.");
             return;
         }
@@ -502,9 +504,11 @@ public class Admin {
 
                     String weekday = weekdays[day];
                     System.out.println("Adding open day for: " + weekday);
+//                    System.out.println("!!!!!!!!!!!!!!!!!!!!!");
+//                    System.out.println(restaurantId);
 
                     // Add the open day and retrieve its ID
-                    openDayStmt.setLong(1, editingRestaurantId);
+                    openDayStmt.setLong(1, restaurantId);
                     openDayStmt.setString(2, weekday);
                     openDayStmt.registerOutParameter(3, Types.BIGINT); // openDayId
                     openDayStmt.registerOutParameter(4, Types.BOOLEAN); // isSuccess
@@ -517,7 +521,7 @@ public class Admin {
                         System.out.println("Failed to add open day for: " + weekday);
                         continue;
                     }
-                    System.out.println("Successfully added open day for: " + weekday + " with ID: " + openDayId);
+                    System.out.println("Successfully added open day for: " + weekday);
                     addedDays.add(day);
 
                     // Add open hours for the newly added open day
@@ -745,7 +749,7 @@ public class Admin {
                 case 2: // Add a new restaurant
                     System.out.println("Adding new restaurant:");
                     if (addRestaurant()) {
-                        addOpenDayAndHours();
+                        addOpenDayAndHours(editingRestaurantId);
                         System.out.println("Restaurant added successfully.");
                     } else {
                         deleteRestaurant(editingRestaurantId);
@@ -794,6 +798,39 @@ public class Admin {
         }
     }
 
+    public static void addCategory(Scanner scanner) {
+        System.out.print("Enter category name: ");
+        String categoryName = scanner.nextLine().trim();
+
+        if (categoryName.isEmpty()) {
+            System.out.println("Category name cannot be empty!");
+            return;
+        }
+
+        String sql = "{CALL AddCategory(?)}";
+
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            try (CallableStatement stmt = conn.prepareCall(sql)) {
+                stmt.setString(1, categoryName);
+                stmt.execute();
+                System.out.println("Category added successfully!");
+            }
+        } catch (SQLException e) {
+            System.out.println("SQL Error: " + e.getMessage());
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    System.out.println("Error closing connection: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+
     public void categoryMenu() {
         Scanner scanner = new Scanner(System.in);
         int pageNumber = 1;
@@ -805,9 +842,10 @@ public class Admin {
 
             System.out.println("\nOptions:");
             System.out.println("1. Delete a Category");
-            System.out.println("2. Next Page");
-            System.out.println("3. Previous Page");
-            System.out.println("4. Exit menu");
+            System.out.println("2. Add a Category");
+            System.out.println("3. Next Page");
+            System.out.println("4. Previous Page");
+            System.out.println("5. Exit menu");
             System.out.print("Select an option: ");
             userInput = scanner.nextLine().trim();
 
@@ -818,16 +856,19 @@ public class Admin {
                     deleteCategory(categoryName);
                     break;
                 case "2":
-                    pageNumber++;
+                    addCategory(scanner);
                     break;
                 case "3":
+                    pageNumber++;
+                    break;
+                case "4":
                     if (pageNumber > 1) {
                         pageNumber--;
                     } else {
                         System.out.println("You are already on the first page.");
                     }
                     break;
-                case "4":
+                case "5":
                     System.out.println("Exiting category browser.");
                     return;
                 default:

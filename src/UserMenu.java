@@ -204,7 +204,7 @@ public class UserMenu {
     }
 
 
-    private static void fetchAndDisplayFoods(int restaurantId, int page, int orderId, List<Item> currentItems) {
+    public static void fetchAndDisplayFoods(int restaurantId, int page, int orderId, List<Item> currentItems) {
         int pageSize = PAGE_SIZE;
         int offset = (page - 1) * pageSize;
         currentItems.clear();
